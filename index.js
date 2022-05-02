@@ -11,6 +11,21 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+function verifyJwt(req, res, next) {
+  const authHEader = req.headers.authorization;
+  if (!authHEader) {
+    return res.status(401).send({ message: "unauthorized user" });
+  }
+  const token = authHEader.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKE, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden access" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
+
 // database connection
 //name: assignment11
 //pass: odCfWseqJ17Mh5fw
@@ -60,13 +75,17 @@ async function run() {
 
     //get with same email
 
-    app.get("/personaldata", async (req, res) => {
+    app.get("/personaldata", verifyJwt, async (req, res) => {
+      const decodedEmail = req.decoded.email;
       const email = req.query.email;
-      console.log(email);
-      const querry = {email : email};
-      const cursor = dataCollection.find(querry);
-      const result = await cursor.toArray();
-      res.send(result);
+      if (email === decodedEmail) {
+        const querry = { email: email };
+        const cursor = dataCollection.find(querry);
+        const result = await cursor.toArray();
+        res.send(result);
+      } else {
+        res.status(403).send({ message: "Forbidden access" });
+      }
     });
 
     //delte
