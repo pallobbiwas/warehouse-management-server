@@ -14,7 +14,8 @@ app.use(express.json());
 //name: assignment11
 //pass: odCfWseqJ17Mh5fw
 
-const uri = `mongodb+srv://assignment11:odCfWseqJ17Mh5fw@cluster0.nvnfe.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PSS}@cluster0.nvnfe.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
+console.log(uri);
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -88,11 +89,20 @@ async function run() {
       const options = { upsert: true };
       const uDoc = {
         $set: {
-          quantity: (parseInt(oldQuantity) - 1 ),
+          quantity: parseInt(oldQuantity) - 1,
         },
       };
       const result = await dataCollection.updateOne(filter, uDoc, options);
       res.send(result);
+    });
+
+    //paganation api
+
+    app.get("/productCount", async (req, res) => {
+      const query = {};
+      const cursor = dataCollection.find(query);
+      const count = await cursor.count();
+      res.send({ count });
     });
   } finally {
     // await client.close();
