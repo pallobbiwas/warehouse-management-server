@@ -31,9 +31,18 @@ async function run() {
     //get
 
     app.get("/data", async (req, res) => {
+      const page = parseInt(req.query.page);
+      const size = parseInt(req.query.size);
+      console.log(page, size)
       const querry = {};
       const cursor = dataCollection.find(querry);
-      const result = await cursor.toArray();
+      let result;
+      if(page){
+        result = await cursor.skip(page*size).limit(size).toArray();
+      }
+      else{
+        result = await cursor.toArray();
+      }
       res.send(result);
     });
 
