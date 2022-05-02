@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 const app = express();
@@ -33,14 +34,16 @@ async function run() {
     app.get("/data", async (req, res) => {
       const page = parseInt(req.query.page);
       const size = parseInt(req.query.size);
-      console.log(page, size)
+      console.log(page, size);
       const querry = {};
       const cursor = dataCollection.find(querry);
       let result;
-      if(page){
-        result = await cursor.skip(page*size).limit(size).toArray();
-      }
-      else{
+      if (page) {
+        result = await cursor
+          .skip(page * size)
+          .limit(size)
+          .toArray();
+      } else {
         result = await cursor.toArray();
       }
       res.send(result);
@@ -52,6 +55,17 @@ async function run() {
       const id = req.params.id;
       const querry = { _id: ObjectId(id) };
       const result = await dataCollection.findOne(querry);
+      res.send(result);
+    });
+
+    //get with same email
+
+    app.get("/personaldata", async (req, res) => {
+      const email = req.query.email;
+      console.log(email);
+      const querry = {email : email};
+      const cursor = dataCollection.find(querry);
+      const result = await cursor.toArray();
       res.send(result);
     });
 
@@ -112,6 +126,17 @@ async function run() {
       const cursor = dataCollection.find(query);
       const count = await cursor.count();
       res.send({ count });
+    });
+
+    //jwt bujinai tao korbo
+    //auth
+
+    app.post("/login", async (req, res) => {
+      const user = req.body;
+      const accessToken = jwt.sign(user, process.env.ACCESS_TOKE, {
+        expiresIn: "1d",
+      });
+      res.send({ accessToken });
     });
   } finally {
     // await client.close();
